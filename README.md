@@ -5,8 +5,8 @@ Minimal HTML scaffold using [`@govtech-bb/styles`](https://www.npmjs.com/package
 ## Run
 
 ```sh
-pnpm install
-pnpm dev
+bun install
+bun dev
 ```
 
 Or open `index.html` via any static server.
@@ -15,6 +15,6 @@ Or open `index.html` via any static server.
 
 For component markup, rules, and conventions when extending this scaffold, load the GovBB design system skill:
 
-- [`~/Code/design-system/skills/govbb-design-system/SKILL.md`](../design-system/skills/govbb-design-system/SKILL.md)
+- https://govtech-bb.github.io/design-system/llm/llms.txt
 
 It tells Claude (and you) how to use class-based markup, where to fetch component docs, and the asset path gotcha (bundler vs CDN).
