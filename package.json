@@ -1,0 +1,14 @@
+{
+  "name": "govbb-scaffold",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "serve ."
+  },
+  "dependencies": {
+    "@govtech-bb/styles": "alpha"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
