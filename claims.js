@@ -23,6 +23,15 @@ const CLAIMS = {
       { name: "Payment",       status: "pending",                     estimateDays: 10 },
     ],
     outstanding: [],
+    payout: {
+      quarterlyEarnings: 9000,
+      contributionsInQuarter: 12,
+      creditsInQuarter: 1,
+      contributions4Quarters: 50,
+      insuredWeeksTotal: 230,
+      durationWeeks: 4,
+      note: "Assumes a 4-week certified incapacity. Final amount depends on actual days certified.",
+    },
   },
 
   // Delayed — information requested, claim is sitting waiting on the applicant.
@@ -49,7 +58,7 @@ const CLAIMS = {
         type: "incorrect",
         title: "Bank account details",
         detail:
-          "The account information you provided does not match the financial institution you selected. Please re-enter your account details from the NIS Direct Deposit Form.",
+          "The account information you provided does not match the financial institution you selected.",
         fields: [
           { name: "account_holder",        label: "Name(s) of account holder", required: true },
           { name: "financial_institution", label: "Financial institution",     required: true },
@@ -59,6 +68,14 @@ const CLAIMS = {
         ],
       },
     ],
+    payout: {
+      quarterlyEarnings: 12000,
+      contributionsInQuarter: 13,
+      creditsInQuarter: 0,
+      insuredWeeksTotal: 156,
+      durationWeeks: 8,
+      note: "Assumes 8 weeks of incapacity. Final amount depends on the medical report and certified recovery period.",
+    },
   },
 
   // Paid — every stage finished on time.
@@ -73,6 +90,15 @@ const CLAIMS = {
       { name: "Payment",      status: "complete", on: "25 January 2026", estimateDays: 10, durationDays: 10 },
     ],
     outstanding: [],
+    payout: {
+      quarterlyEarnings: 13500,
+      contributionsInQuarter: 13,
+      creditsInQuarter: 0,
+      contributions3Quarters: 38,
+      insuredWeeksTotal: 480,
+      durationWeeks: 13,
+      note: "Paid over 13 weeks (the full claimed unemployment period).",
+    },
   },
 };
 
@@ -185,4 +211,79 @@ function delayedStagesWithReason(claim, ref) {
   return claim.stages.filter(function (s) {
     return stageDaysOver(s, ref) > 0 && s.delayReason;
   });
+}
+
+// ---- payout ----
+
+// 2025 weekly earnings ceiling for NIS contributions (BBD).
+// Source: https://www.nis.gov.bb/contribution-rates/
+const NIS_WEEKLY_CEILING = 1219;
+
+// Per-benefit calculation rules, sourced from nis.gov.bb.
+const BENEFIT_RATES = {
+  "Sickness benefit": {
+    rate: 2 / 3,
+    rateLabel: "66⅔%",
+    page: { url: "https://www.nis.gov.bb/sickness-benefits/", title: "NIS Sickness Benefit" },
+  },
+  "Employment injury": {
+    rate: 0.9,
+    rateLabel: "90%",
+    page: { url: "https://www.nis.gov.bb/employee-injury/", title: "NIS Employment Injury Benefit" },
+  },
+  "Unemployment benefit": {
+    rate: 0.6,
+    rateLabel: "60%",
+    page: { url: "https://www.nis.gov.bb/unemployment-benefits/", title: "NIS Unemployment Benefit" },
+  },
+};
+
+function formatCurrency(amount) {
+  return "BBD $" + amount.toLocaleString("en-BB", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function payoutMeta(claim) {
+  return BENEFIT_RATES[claim.type];
+}
+
+// Average weekly insurable earnings = quarterly earnings ÷ 13,
+// capped at the NIS weekly earnings ceiling.
+function avgWeeklyEarnings(payout) {
+  return Math.min(payout.quarterlyEarnings / 13, NIS_WEEKLY_CEILING);
+}
+
+function payoutWeekly(claim) {
+  return avgWeeklyEarnings(claim.payout) * payoutMeta(claim).rate;
+}
+
+function payoutTotal(claim) {
+  return payoutWeekly(claim) * claim.payout.durationWeeks;
+}
+
+// Eligibility rows for the calculation explainer dialog.
+// Each row: { label, actual, minimum }. minimum=null means informational only.
+function eligibilityRows(claim) {
+  const p = claim.payout;
+  if (claim.type === "Sickness benefit") {
+    return [
+      { label: "Contributions paid in the relevant quarter", actual: p.contributionsInQuarter, minimum: 7 },
+      { label: "Contributions or credits in the last 4 quarters", actual: p.contributions4Quarters, minimum: 39 },
+    ];
+  }
+  if (claim.type === "Employment injury") {
+    return [
+      { label: "Injury occurred during insurable employment", actual: "Yes", minimum: null },
+    ];
+  }
+  if (claim.type === "Unemployment benefit") {
+    return [
+      { label: "Total weeks insured", actual: p.insuredWeeksTotal, minimum: 52 },
+      { label: "Contributions in the relevant quarter", actual: p.contributionsInQuarter, minimum: 7 },
+      { label: "Contributions in the last 3 consecutive quarters", actual: p.contributions3Quarters, minimum: 20 },
+    ];
+  }
+  return [];
 }

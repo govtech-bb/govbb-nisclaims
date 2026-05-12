@@ -9,6 +9,11 @@
       href="https://unpkg.com/@govtech-bb/styles@alpha/dist/styles.css"
     />
     <style>
+      /* Lock the page behind any open dialog so it can't be scrolled. */
+      html:has(dialog[open]) {
+        overflow: hidden;
+      }
+
       /* Local-only styles for the stage list and issue cards.
          Use design tokens so this stays on-brand. */
       .claim-summary {
@@ -151,19 +156,94 @@
         gap: var(--spacing-xs);
       }
 
-      .confirmation-check {
-        display: inline-flex;
+      .payout-panel {
+        background: var(--color-background);
+        border: 1px solid var(--color-grey-00);
+        border-left: 4px solid var(--color-blue-100);
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-m);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xxs);
+      }
+      .payout-panel--paid {
+        border-left-color: var(--color-green-00);
+        background: var(--color-green-10);
+      }
+      .payout-panel__label {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-body);
+      }
+      .payout-panel__amount {
+        font-size: var(--font-size-h3);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text);
+      }
+      .payout-panel__row {
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        justify-content: center;
-        width: 3rem;
-        height: 3rem;
-        border-radius: 50%;
-        background: var(--color-green-00);
-        color: var(--color-white-00);
-        font-size: 1.5rem;
+        gap: var(--spacing-s);
+        justify-content: space-between;
+      }
+      .calc-rows {
+        margin: 0;
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: var(--spacing-xs) var(--spacing-m);
+      }
+      .calc-rows dt {
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-muted);
+      }
+      .calc-rows dd {
+        margin: 0;
+      }
+      @media (max-width: 480px) {
+        .calc-rows {
+          grid-template-columns: 1fr;
+          gap: var(--spacing-xxs);
+        }
+        .calc-rows dd {
+          padding-bottom: var(--spacing-xs);
+        }
+      }
+
+      .eligibility-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+      .eligibility-list li {
+        display: flex;
+        gap: var(--spacing-xs);
+        align-items: flex-start;
+      }
+      .eligibility-list__check {
+        color: var(--color-green-00);
         font-weight: var(--font-weight-bold);
         flex-shrink: 0;
       }
+
+      .payout-panel__disclaimer {
+        margin: 0;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-caption);
+        font-style: italic;
+      }
+      .estimate-banner {
+        background: var(--color-yellow-40);
+        border-left: 4px solid var(--color-yellow-00);
+        padding: var(--spacing-s) var(--spacing-m);
+        border-radius: var(--radius-sm);
+        margin: 0;
+        font-weight: var(--font-weight-bold);
+      }
+
+      /* Chat dialog styles live in chat.js (injected on load). */
 
       .step-bar {
         display: flex;
@@ -188,6 +268,15 @@
         padding: 0;
         display: flex;
         align-items: flex-start;
+      }
+      .step-bar__current-name {
+        text-align: center;
+        font-size: var(--font-size-body);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text);
+        line-height: 1.3;
+        word-break: break-word;
+        margin-top: var(--spacing-xs);
       }
       .step-bar__step {
         flex: 1 1 0;
@@ -238,20 +327,25 @@
         border-color: var(--color-yellow-00);
         color: var(--color-text);
         box-shadow: 0 0 0 4px var(--color-yellow-40);
+        width: 3rem;
+        height: 3rem;
+        margin-top: -0.25rem;
+        font-size: 1.125rem;
       }
       .step-bar__name {
-        font-size: var(--font-size-caption);
-        color: var(--color-text-muted);
-        line-height: 1.3;
-        word-break: break-word;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
-      .step-bar__step--complete .step-bar__name {
-        color: var(--color-text);
-      }
-      .step-bar__step--current .step-bar__name {
-        color: var(--color-text);
-        font-weight: var(--font-weight-bold);
-      }
+      /* Active stage name now rendered as a separate centered block
+         below the markers row (.step-bar__current-name). The names inside
+         each step stay visually hidden for screen reader continuity. */
 
       .issues {
         list-style: none;
@@ -334,11 +428,11 @@
         flex: 1 1 auto;
       }
       .resolve-dialog__header {
-        padding: var(--spacing-m);
+        padding: var(--spacing-s) var(--spacing-m);
         border-bottom: 1px solid var(--color-grey-00);
         display: flex;
         flex-direction: column;
-        gap: var(--spacing-xs);
+        gap: var(--spacing-xxs);
         flex-shrink: 0;
       }
       .resolve-dialog__body {
@@ -350,7 +444,7 @@
         flex: 1 1 auto;
       }
       .resolve-dialog__footer {
-        padding: var(--spacing-m);
+        padding: var(--spacing-xs) var(--spacing-m);
         border-top: 1px solid var(--color-grey-00);
         display: flex;
         gap: var(--spacing-s);
@@ -448,6 +542,7 @@
     </footer>
 
     <script src="claims.js"></script>
+    <script src="chat.js"></script>
     <script>
       (function () {
         const root = document.getElementById("root");
@@ -564,10 +659,16 @@
             })
             .join("");
 
+          const activeName = currentIdx !== -1
+            ? '<div class="step-bar__current-name" aria-hidden="true">' +
+                escapeHtml(claim.stages[currentIdx].name) + "</div>"
+            : "";
+
           return (
             '<div class="step-bar" aria-label="Claim stage progress">' +
             '  <span class="step-bar__caption">' + caption + "</span>" +
             '  <ol class="step-bar__steps">' + items + "</ol>" +
+                activeName +
             "</div>"
           );
         }
@@ -640,6 +741,30 @@
             "Originally estimated " + dayLabel(est) + " (by " + originalTarget +
               "). Now expected to complete by " + revisedTarget + ".",
             reasons
+          );
+        }
+
+        function renderPayoutPanel(claim) {
+          if (!claim.payout || !payoutMeta(claim)) return "";
+          const paid = isPaid(claim);
+          const total = payoutTotal(claim);
+          const label = paid ? "Total paid" : "Estimated total payout";
+
+          const disclaimer = paid
+            ? ""
+            : '<p class="payout-panel__disclaimer">This is an estimate. The actual payout may vary based on certified duration, contributions verified at processing, and updates to NIS rates.</p>';
+
+          return (
+            '<div class="payout-panel' + (paid ? " payout-panel--paid" : "") + '">' +
+            '  <span class="payout-panel__label">' + escapeHtml(label) + "</span>" +
+            '  <div class="payout-panel__row">' +
+            '    <span class="payout-panel__amount">' + escapeHtml(formatCurrency(total)) + "</span>" +
+            '    <button type="button" class="govbb-btn" data-payout-explain aria-label="See why this estimate was calculated">' +
+            '      <span aria-hidden="true">&#9432;</span> See why?' +
+            "    </button>" +
+            "  </div>" +
+            disclaimer +
+            "</div>"
           );
         }
 
@@ -733,8 +858,6 @@
             const id = prefix + "-file";
             return (
               '<label class="govbb-file-upload" for="' + id + '">' +
-              '  <span class="govbb-label">Upload file</span>' +
-              '  <span class="govbb-hint">JPG, PNG, or PDF. Maximum 5 MB.</span>' +
               '  <span class="govbb-error-message" id="' + id + '-error" hidden>Choose a file to upload</span>' +
               '  <div class="govbb-file-upload__dropzone">' +
               '    <div class="govbb-file-upload__info">' +
@@ -800,7 +923,12 @@
                   (isMissing ? "Provide missing document" : "Correct your information") + "</span>" +
             '    <h2 class="govbb-text-h3" id="' + titleId + '">' +
                   escapeHtml(issue.title) + "</h2>" +
-            '    <p class="govbb-text-body" style="margin: 0;">' + escapeHtml(issue.detail) + "</p>" +
+            '    <details class="govbb-show-hide">' +
+            '      <summary class="govbb-show-hide__summary">Show details</summary>' +
+            '      <div class="govbb-show-hide__content">' +
+            '        <p class="govbb-text-body" style="margin: 0;">' + escapeHtml(issue.detail) + "</p>" +
+            "      </div>" +
+            "    </details>" +
             "  </header>" +
             '  <div class="resolve-dialog__body">' + body + "</div>" +
             '  <footer class="resolve-dialog__footer">' +
@@ -810,6 +938,12 @@
             "</form>";
 
           document.body.appendChild(dialog);
+
+          // Details collapsed by default on mobile, open on desktop.
+          const details = dialog.querySelector(".govbb-show-hide");
+          if (details && window.matchMedia("(min-width: 768px)").matches) {
+            details.open = true;
+          }
 
           const form = dialog.querySelector("form");
 
@@ -904,108 +1038,109 @@
           });
         }
 
-        function openHelpDialog() {
+
+        function wireHelpButton() {
+          const btn = root.querySelector("[data-help]");
+          if (btn) {
+            btn.addEventListener("click", function () {
+              window.openHelpDialog({ claim: claim, claimKey: key });
+            });
+          }
+        }
+
+        function wirePayoutExplain() {
+          const btn = root.querySelector("[data-payout-explain]");
+          if (btn) btn.addEventListener("click", function () { openPayoutExplainerDialog(claim); });
+        }
+
+        function openPayoutExplainerDialog(claim) {
+          const meta = payoutMeta(claim);
+          const p = claim.payout;
+          const weekly = avgWeeklyEarnings(p);
+          const wk = payoutWeekly(claim);
+          const total = payoutTotal(claim);
+
+          const calcMarkup =
+            '<dl class="calc-rows">' +
+            '  <dt>Average weekly insurable earnings</dt>' +
+            '  <dd>' + escapeHtml(formatCurrency(p.quarterlyEarnings)) +
+                       " in the relevant quarter &divide; 13 weeks = <strong>" +
+                       escapeHtml(formatCurrency(weekly)) + "</strong>" +
+                       (p.quarterlyEarnings / 13 > NIS_WEEKLY_CEILING
+                         ? ' <span class="govbb-text-caption" style="color: var(--color-text-muted);">(capped at the ' +
+                           escapeHtml(formatCurrency(NIS_WEEKLY_CEILING)) + " weekly earnings ceiling)</span>"
+                         : "") +
+                   "</dd>" +
+            '  <dt>Benefit rate</dt>' +
+            '  <dd><strong>' + meta.rateLabel + "</strong> &mdash; " + escapeHtml(claim.type) + " rate</dd>" +
+            '  <dt>Weekly benefit</dt>' +
+            '  <dd>' + escapeHtml(formatCurrency(weekly)) + " &times; " + meta.rateLabel +
+                       " = <strong>" + escapeHtml(formatCurrency(wk)) + "</strong></dd>" +
+            '  <dt>Duration</dt>' +
+            "  <dd><strong>" + p.durationWeeks + " weeks</strong></dd>" +
+            '  <dt>Total</dt>' +
+            '  <dd>' + escapeHtml(formatCurrency(wk)) + " &times; " + p.durationWeeks +
+                       " weeks = <strong>" + escapeHtml(formatCurrency(total)) + "</strong></dd>" +
+            "</dl>";
+
+          const rows = eligibilityRows(claim);
+          const eligibilityMarkup = rows.length === 0 ? "" :
+            "<div>" +
+            '  <h3 class="govbb-text-h4" style="margin: 0 0 var(--spacing-xs) 0;">Eligibility</h3>' +
+            '  <ul class="eligibility-list">' +
+                 rows.map(function (r) {
+                   const detail = r.minimum != null
+                     ? escapeHtml(String(r.actual)) + " <span class=\"govbb-text-caption\" style=\"color: var(--color-text-muted);\">(minimum " + r.minimum + ")</span>"
+                     : escapeHtml(String(r.actual));
+                   return (
+                     "<li>" +
+                     '  <span class="eligibility-list__check" aria-hidden="true">&#10003;</span>' +
+                     '  <span>' + escapeHtml(r.label) + ": " + detail + "</span>" +
+                     "</li>"
+                   );
+                 }).join("") +
+            "  </ul>" +
+            "</div>";
+
+          const noteMarkup = p.note
+            ? '<p class="govbb-text-body" style="margin: 0; color: var(--color-text-muted);">' +
+              escapeHtml(p.note) + "</p>"
+            : "";
+
+          const refsMarkup =
+            '<p class="govbb-text-body" style="margin: 0;">' +
+            'Sources: <a class="govbb-link" href="' + meta.page.url + '" target="_blank" rel="noopener noreferrer">' +
+            escapeHtml(meta.page.title) + "</a>" +
+            ' &middot; <a class="govbb-link" href="https://www.nis.gov.bb/contribution-rates/" target="_blank" rel="noopener noreferrer">' +
+            "Contribution rates &amp; earnings ceilings</a>" +
+            "</p>";
+
           const dialog = document.createElement("dialog");
           dialog.className = "resolve-dialog";
-          dialog.setAttribute("aria-labelledby", "help-title");
+          dialog.setAttribute("aria-labelledby", "payout-explain-title");
           dialog.innerHTML =
-            '<form class="resolve-dialog__form">' +
+            '<form class="resolve-dialog__form" method="dialog">' +
             '  <header class="resolve-dialog__header">' +
             '    <span class="govbb-text-caption" style="color: var(--color-text-muted);">' +
-            '      Claim ' + escapeHtml(key) + "</span>" +
-            '    <h2 class="govbb-text-h3" id="help-title">Get help or report a concern</h2>' +
-            '    <p class="govbb-text-body" style="margin: 0;">' +
-            "      Tell us what you need. A case officer will reply within 2 working days." +
-            "    </p>" +
+                  escapeHtml(claim.type) + "</span>" +
+            '    <h2 class="govbb-text-h3" id="payout-explain-title">How this is calculated</h2>' +
             "  </header>" +
             '  <div class="resolve-dialog__body">' +
-            '    <div class="govbb-form-group">' +
-            '      <label class="govbb-label" for="help-type">What can we help with?</label>' +
-            '      <div class="govbb-select-wrapper">' +
-            '        <select class="govbb-select" id="help-type" name="type">' +
-            '          <option value="question">I have a question about my claim</option>' +
-            '          <option value="help">I need help with a document or step</option>' +
-            '          <option value="concern">I want to report a concern</option>' +
-            '          <option value="other">Something else</option>' +
-            "        </select>" +
-            "      </div>" +
-            "    </div>" +
-            '    <div class="govbb-form-group">' +
-            '      <label class="govbb-label" for="help-message">Your message</label>' +
-            '      <span class="govbb-hint">Include any details we will need to look into this.</span>' +
-            '      <span class="govbb-error-message" id="help-error" hidden>Enter a message</span>' +
-            '      <div class="govbb-input-wrapper">' +
-            '        <textarea class="govbb-textarea" id="help-message" name="message" rows="5" required></textarea>' +
-            "      </div>" +
-            "    </div>" +
+                 (isPaid(claim) ? "" :
+                   '<p class="estimate-banner">This is only an estimate. The actual payout may vary based on certified duration, contributions verified at processing, and updates to NIS rates.</p>') +
+                 calcMarkup +
+                 eligibilityMarkup +
+                 noteMarkup +
+                 refsMarkup +
             "  </div>" +
             '  <footer class="resolve-dialog__footer">' +
-            '    <button type="button" class="govbb-btn govbb-btn--secondary" data-cancel>Cancel</button>' +
-            '    <button type="submit" class="govbb-btn">Send message</button>' +
+            '    <button type="submit" class="govbb-btn">Close</button>' +
             "  </footer>" +
             "</form>";
 
           document.body.appendChild(dialog);
-
-          const form = dialog.querySelector("form");
-          const message = dialog.querySelector("#help-message");
-          const error = dialog.querySelector("#help-error");
-
-          message.addEventListener("input", function () {
-            if (message.value.trim()) {
-              error.hidden = true;
-              message.removeAttribute("aria-invalid");
-            }
-          });
-
-          dialog.querySelector("[data-cancel]").addEventListener("click", function () {
-            dialog.close("cancel");
-          });
-
-          form.addEventListener("submit", function (e) {
-            e.preventDefault();
-            if (!message.value.trim()) {
-              error.hidden = false;
-              message.setAttribute("aria-invalid", "true");
-              message.focus();
-              return;
-            }
-            showHelpConfirmation(dialog);
-          });
-
-          dialog.addEventListener("close", function () {
-            dialog.remove();
-          });
-
+          dialog.addEventListener("close", function () { dialog.remove(); });
           dialog.showModal();
-        }
-
-        function showHelpConfirmation(dialog) {
-          dialog.setAttribute("aria-labelledby", "help-confirm-title");
-          dialog.innerHTML =
-            '<div class="resolve-dialog__form">' +
-            '  <div class="resolve-dialog__body" style="background: var(--color-green-10); align-items: center; text-align: center; gap: var(--spacing-m);">' +
-            '    <span class="confirmation-check" aria-hidden="true">&#10003;</span>' +
-            '    <h2 class="govbb-text-h3" id="help-confirm-title" style="margin: 0;">Message sent</h2>' +
-            '    <p class="govbb-text-body" style="margin: 0;">' +
-            "      Thanks — we have received your message. A case officer will reply within 2 working days." +
-            "    </p>" +
-            "  </div>" +
-            '  <footer class="resolve-dialog__footer" style="justify-content: center;">' +
-            '    <button type="button" class="govbb-btn" data-confirm-close>Close</button>' +
-            "  </footer>" +
-            "</div>";
-
-          const closeBtn = dialog.querySelector("[data-confirm-close]");
-          closeBtn.addEventListener("click", function () {
-            dialog.close("submitted");
-          });
-          closeBtn.focus();
-        }
-
-        function wireHelpButton() {
-          const btn = root.querySelector("[data-help]");
-          if (btn) btn.addEventListener("click", openHelpDialog);
         }
 
         function renderClaim() {
@@ -1023,6 +1158,8 @@
             renderStepBar(claim) +
 
             renderTimelinePanel(claim) +
+
+            renderPayoutPanel(claim) +
 
             '  <div class="claim-summary">' +
             "    <dl>" +
@@ -1049,7 +1186,7 @@
 
             '  <div class="govbb-btn-group">' +
             '    <button type="button" class="govbb-btn" data-help>' +
-            "      Get help or report a concern" +
+            "      Need help?" +
             "    </button>" +
             '    <a class="govbb-btn govbb-btn--secondary" href="/">Go back</a>' +
             "  </div>" +
@@ -1058,6 +1195,7 @@
 
           wireResolveButtons();
           wireHelpButton();
+          wirePayoutExplain();
         }
 
         if (!claim) {

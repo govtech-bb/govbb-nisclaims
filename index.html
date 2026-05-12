@@ -87,6 +87,7 @@
                   class="govbb-input"
                   type="text"
                   id="tracking"
+                  placeholder="Type here..."
                   name="tracking"
                   autocomplete="off"
                   spellcheck="false"
@@ -97,25 +98,24 @@
             </div>
 
             <div class="govbb-btn-group">
-              <button class="govbb-btn" type="submit">Find status of claim</button>
+              <button class="govbb-btn" type="submit">Search</button>
+              <button class="govbb-btn govbb-btn--secondary" type="button" data-help>Need help?</button>
             </div>
           </form>
 
-          <details class="govbb-show-hide">
-            <summary class="govbb-show-hide__summary">Try the prototype with sample tracking numbers</summary>
-            <div class="govbb-show-hide__content">
-              <p class="govbb-text-body">This prototype uses dummy data. Try one of:</p>
-              <ul class="govbb-list govbb-list--bullet">
-                <li><a class="govbb-link" href="status?tracking=CL-2025-00123">CL-2025-00123</a> — sickness benefit, under review, no outstanding issues</li>
-                <li><a class="govbb-link" href="status?tracking=CL-2025-00456">CL-2025-00456</a> — employment injury, information requested, 2 outstanding issues</li>
-                <li><a class="govbb-link" href="status?tracking=CL-2025-00789">CL-2025-00789</a> — unemployment benefit, paid</li>
-              </ul>
-            </div>
-          </details>
+          <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+            <p class="govbb-text-body">Or view the following examples which use dummy data:</p>
+            <ul class="govbb-list govbb-list--bullet">
+              <li><a class="govbb-link" href="status?tracking=CL-2025-00123">CL-2025-00123</a> — sickness benefit, under review, no outstanding issues</li>
+              <li><a class="govbb-link" href="status?tracking=CL-2025-00456">CL-2025-00456</a> — employment injury, information requested, 2 outstanding issues</li>
+              <li><a class="govbb-link" href="status?tracking=CL-2025-00789">CL-2025-00789</a> — unemployment benefit, paid</li>
+            </ul>
+          </div>
         </div>
       </div>
     </main>
 
+    <script src="chat.js"></script>
     <script>
       (function () {
         const form = document.getElementById("tracking-form");
@@ -142,6 +142,8 @@
             input.setAttribute("aria-describedby", "tracking-hint");
           }
         });
+
+        window.wireHelpButton(document.querySelector("[data-help]"));
       })();
     </script>
 

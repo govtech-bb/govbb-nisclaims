@@ -1,14 +1,12 @@
 {
-  "name": "govbb-scaffold",
+  "name": "govbb-nisclaims",
   "version": "0.0.1",
   "private": true,
+  "engines": { "node": ">=18" },
   "scripts": {
-    "dev": "serve ."
+    "dev": "node server.js"
   },
   "dependencies": {
     "@govtech-bb/styles": "alpha"
-  },
-  "devDependencies": {
-    "serve": "^14.2.4"
   }
 }
