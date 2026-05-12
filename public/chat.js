@@ -199,9 +199,9 @@
   }
 
   const HELP_PILLS_GENERAL = [
-    "Am I eligible for an NIS benefit?",
-    "How is my benefit calculated?",
-    "How do waiting days work?",
+    "Am I eligible?",
+    "How is it calculated?",
+    "Waiting days?",
   ];
 
   function escapeHtml(value) {
@@ -293,21 +293,21 @@
 
     if (paid) {
       return [
-        "Why did I receive this amount?",
-        "Can I claim again later?",
+        "Why this amount?",
+        "Claim again later?",
       ];
     }
     if (hasOutstanding) {
       return [
-        "What do I need to do next?",
-        "Why is my claim delayed?",
-        "How was my amount calculated?",
+        "What's next?",
+        "Why delayed?",
+        "How was it calculated?",
       ];
     }
     return [
-      "What does my current stage mean?",
-      "When will I receive payment?",
-      "How was my amount calculated?",
+      "What's my stage?",
+      "When will I be paid?",
+      "How was it calculated?",
     ];
   }
 
