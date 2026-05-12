@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Claim status — GOVBB</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@govtech-bb/styles@alpha/dist/styles.css"
+    />
+    <style>
+      /* Local-only styles for the stage list and issue cards.
+         Use design tokens so this stays on-brand. */
+      .claim-summary {
+        background: var(--color-blue-10);
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-m);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+      .claim-summary dl {
+        margin: 0;
+        display: grid;
+        grid-template-columns: minmax(8rem, max-content) 1fr;
+        gap: var(--spacing-xxs) var(--spacing-m);
+      }
+      .claim-summary dt {
+        font-weight: var(--font-weight-bold);
+      }
+      .claim-summary dd {
+        margin: 0;
+      }
+
+      .stages {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-s);
+      }
+      .stages__item {
+        display: grid;
+        grid-template-columns: 2.5rem 1fr;
+        gap: var(--spacing-s);
+        align-items: start;
+        position: relative;
+      }
+      .stages__item:not(:last-child)::before {
+        content: "";
+        position: absolute;
+        left: calc(2.5rem / 2 - 1px);
+        top: 2.5rem;
+        bottom: calc(var(--spacing-s) * -1);
+        width: 2px;
+        background: var(--color-grey-00);
+      }
+      .stages__marker {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: var(--font-weight-bold);
+        background: var(--color-grey-00);
+        color: var(--color-text);
+        border: 2px solid var(--color-grey-00);
+      }
+      .stages__item--complete .stages__marker {
+        background: var(--color-green-00);
+        border-color: var(--color-green-00);
+        color: var(--color-white-00);
+      }
+      .stages__item--current .stages__marker {
+        background: var(--color-yellow-100);
+        border-color: var(--color-yellow-00);
+        color: var(--color-text);
+      }
+      .stages__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xxs);
+        padding-top: var(--spacing-xxs);
+      }
+      .stages__name {
+        font-weight: var(--font-weight-bold);
+      }
+      .stages__item--pending .stages__name {
+        color: var(--color-text-muted);
+      }
+      .stages__meta {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-caption);
+      }
+      .stages__tag {
+        align-self: flex-start;
+        font-size: var(--font-size-caption);
+        font-weight: var(--font-weight-bold);
+        padding: var(--spacing-xxs) var(--spacing-xs);
+        border-radius: var(--radius-sm);
+        background: var(--color-yellow-40);
+        color: var(--color-text);
+      }
+      .stages__timing {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-caption);
+      }
+      .stages__over {
+        color: var(--color-error);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .timeline-panel {
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-m);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        border-left: 4px solid var(--color-grey-00);
+        background: var(--color-blue-10);
+      }
+      .timeline-panel--ok {
+        background: var(--color-green-10);
+        border-left-color: var(--color-green-00);
+      }
+      .timeline-panel--warn {
+        background: var(--color-yellow-40);
+        border-left-color: var(--color-yellow-00);
+      }
+      .timeline-panel__reason {
+        margin-top: var(--spacing-xs);
+        padding-top: var(--spacing-xs);
+        border-top: 1px solid rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xxs);
+      }
+      .timeline-panel__reason-label {
+        font-weight: var(--font-weight-bold);
+      }
+
+      .next-step {
+        background: var(--color-blue-10);
+        border-left: 4px solid var(--color-blue-100);
+        padding: var(--spacing-m);
+        border-radius: var(--radius-sm);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+
+      .confirmation-check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background: var(--color-green-00);
+        color: var(--color-white-00);
+        font-size: 1.5rem;
+        font-weight: var(--font-weight-bold);
+        flex-shrink: 0;
+      }
+
+      .step-bar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-s);
+        padding: var(--spacing-m) var(--spacing-s);
+        background: var(--color-background);
+        border: 1px solid var(--color-grey-00);
+        border-radius: var(--radius-sm);
+      }
+      .step-bar__caption {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-body);
+      }
+      .step-bar__caption strong {
+        color: var(--color-text);
+        font-weight: var(--font-weight-bold);
+      }
+      .step-bar__steps {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: flex-start;
+      }
+      .step-bar__step {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-xs);
+        position: relative;
+        text-align: center;
+      }
+      /* Connector between markers */
+      .step-bar__step:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        height: 2px;
+        top: calc(1.25rem - 1px);
+        left: calc(50% + 1.5rem);
+        right: calc(-50% + 1.5rem);
+        background: var(--color-grey-00);
+        z-index: 0;
+      }
+      .step-bar__step--complete:not(:last-child)::after {
+        background: var(--color-green-00);
+      }
+      .step-bar__marker {
+        position: relative;
+        z-index: 1;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: var(--font-weight-bold);
+        background: var(--color-grey-00);
+        color: var(--color-text);
+        border: 2px solid var(--color-grey-00);
+        flex-shrink: 0;
+      }
+      .step-bar__step--complete .step-bar__marker {
+        background: var(--color-green-00);
+        border-color: var(--color-green-00);
+        color: var(--color-white-00);
+      }
+      .step-bar__step--current .step-bar__marker {
+        background: var(--color-yellow-100);
+        border-color: var(--color-yellow-00);
+        color: var(--color-text);
+        box-shadow: 0 0 0 4px var(--color-yellow-40);
+      }
+      .step-bar__name {
+        font-size: var(--font-size-caption);
+        color: var(--color-text-muted);
+        line-height: 1.3;
+        word-break: break-word;
+      }
+      .step-bar__step--complete .step-bar__name {
+        color: var(--color-text);
+      }
+      .step-bar__step--current .step-bar__name {
+        color: var(--color-text);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .issues {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-s);
+      }
+      .issue {
+        border: 2px solid var(--color-red-00);
+        background: var(--color-red-10);
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-m);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+      .issue__tag {
+        align-self: flex-start;
+        font-size: var(--font-size-caption);
+        font-weight: var(--font-weight-bold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: var(--spacing-xxs) var(--spacing-xs);
+        border-radius: var(--radius-sm);
+        background: var(--color-red-00);
+        color: var(--color-white-00);
+      }
+      .issue__title {
+        font-weight: var(--font-weight-bold);
+      }
+
+      .panel-success {
+        background: var(--color-green-10);
+        border-left: 4px solid var(--color-green-00);
+        padding: var(--spacing-m);
+        border-radius: var(--radius-sm);
+      }
+
+      .issue__resolved-note {
+        align-self: flex-start;
+        font-size: var(--font-size-caption);
+        font-weight: var(--font-weight-bold);
+        padding: var(--spacing-xxs) var(--spacing-xs);
+        border-radius: var(--radius-sm);
+        background: var(--color-green-40);
+        color: var(--color-text);
+      }
+
+      .flash {
+        background: var(--color-green-10);
+        border-left: 4px solid var(--color-green-00);
+        padding: var(--spacing-s) var(--spacing-m);
+        border-radius: var(--radius-sm);
+      }
+
+      .resolve-dialog {
+        border: 0;
+        border-radius: var(--radius-sm);
+        padding: 0;
+        max-width: 36rem;
+        width: calc(100% - 2rem);
+        max-height: calc(100vh - 2rem);
+        background: var(--color-background);
+        color: var(--color-text);
+        inset: 0;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .resolve-dialog::backdrop {
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .resolve-dialog__form {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        flex: 1 1 auto;
+      }
+      .resolve-dialog__header {
+        padding: var(--spacing-m);
+        border-bottom: 1px solid var(--color-grey-00);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        flex-shrink: 0;
+      }
+      .resolve-dialog__body {
+        padding: var(--spacing-m);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-s);
+        overflow-y: auto;
+        flex: 1 1 auto;
+      }
+      .resolve-dialog__footer {
+        padding: var(--spacing-m);
+        border-top: 1px solid var(--color-grey-00);
+        display: flex;
+        gap: var(--spacing-s);
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+    </style>
+  </head>
+  <body class="govbb-page">
+    <div>
+      <div class="govbb-official-banner">
+        <div class="govbb-container govbb-official-banner__inner">
+          <div class="govbb-official-banner__crest">
+            <img
+              class="govbb-official-banner__icon"
+              src="https://unpkg.com/@govtech-bb/styles@alpha/dist/assets/images/govbb-creast.svg"
+              alt=""
+            />
+          </div>
+          <div class="govbb-official-banner__text">
+            <span>Official government website</span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="govbb-status-banner govbb-status-banner--alpha"
+        role="status"
+        aria-label="alpha status banner"
+        aria-live="polite"
+      >
+        <div class="govbb-container">
+          <p>
+            This page is in
+            <a class="govbb-link govbb-link--secondary" href="/what-we-mean-by-alpha">Alpha</a>.
+          </p>
+        </div>
+      </div>
+
+      <header class="govbb-header">
+        <div class="govbb-container govbb-header__inner">
+          <a href="/" aria-label="Go to the alpha.gov.bb homepage">
+            <img
+              class="govbb-header__logo"
+              src="https://unpkg.com/@govtech-bb/styles@alpha/dist/assets/images/govbb-logo.svg"
+              alt="GOVBB"
+            />
+          </a>
+        </div>
+      </header>
+    </div>
+
+    <main class="govbb-page__main">
+      <div class="govbb-container">
+        <div style="padding-block: var(--spacing-m); display: flex; flex-direction: column; gap: var(--spacing-m);">
+          <nav class="govbb-breadcrumbs" aria-label="Breadcrumb">
+            <ol class="govbb-breadcrumbs__list">
+              <li class="govbb-breadcrumbs__item">
+                <a class="govbb-breadcrumbs__link" href="/">Track your claim</a>
+              </li>
+              <li class="govbb-breadcrumbs__item" aria-current="page">Claim status</li>
+            </ol>
+          </nav>
+
+          <div id="flash" aria-live="polite"></div>
+          <div id="root"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="govbb-footer">
+      <div class="govbb-container govbb-footer__inner">
+        <nav class="govbb-footer__nav" aria-label="Footer">
+          <a class="govbb-footer__link" href="/">Home</a>
+          <a class="govbb-footer__link" href="/terms-conditions">Terms &amp; Conditions</a>
+          <a
+            class="govbb-footer__link"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://job-boards.greenhouse.io/govtechbarbados"
+            >Careers</a
+          >
+        </nav>
+        <hr class="govbb-footer__divider" aria-hidden="true" />
+        <div class="govbb-footer__end">
+          <img
+            class="govbb-footer__coat"
+            src="https://unpkg.com/@govtech-bb/styles@alpha/dist/assets/images/govbb-creast.svg"
+            alt="Government of Barbados Coat of Arms"
+          />
+          <p class="govbb-footer__copy">© 2026 Government of Barbados</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="claims.js"></script>
+    <script>
+      (function () {
+        const root = document.getElementById("root");
+        const params = new URLSearchParams(window.location.search);
+        const { key, claim } = lookupClaim(params.get("tracking"));
+
+        function escapeHtml(value) {
+          return String(value).replace(/[&<>"']/g, function (c) {
+            return ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c];
+          });
+        }
+
+        function renderNotFound() {
+          const safeKey = key
+            ? '"' + escapeHtml(key) + '"'
+            : "the number you provided";
+          root.innerHTML =
+            '<div style="max-width: 40rem; display: flex; flex-direction: column; gap: var(--spacing-m);">' +
+            '  <h1 class="govbb-text-h1">We could not find that claim</h1>' +
+            '  <p class="govbb-text-body">We have no record of a claim with tracking number ' +
+            safeKey +
+            ". Check your confirmation email and try again." +
+            "  </p>" +
+            '  <div class="govbb-btn-group">' +
+            '    <a class="govbb-btn" href="/">Try another tracking number</a>' +
+            "  </div>" +
+            "</div>";
+        }
+
+        function renderStages(stages) {
+          const ref = today();
+          return stages
+            .map(function (stage, i) {
+              const cls = "stages__item stages__item--" + stage.status;
+              const marker =
+                stage.status === "complete"
+                  ? "&#10003;"
+                  : String(i + 1);
+
+              let metaText = "";
+              if (stage.status === "current") metaText = "Since " + stage.on;
+              else if (stage.status === "complete") metaText = "Began " + stage.on;
+              const meta = metaText
+                ? '<span class="stages__meta">' + escapeHtml(metaText) + "</span>"
+                : "";
+
+              const elapsed = stageElapsedDays(stage, ref);
+              const over = stageDaysOver(stage, ref);
+              let timingText = "";
+              if (stage.status === "complete") {
+                timingText = "Estimated " + dayLabel(stage.estimateDays) +
+                  " · Took " + dayLabel(stage.durationDays || 0);
+              } else if (stage.status === "current") {
+                timingText = "Estimated " + dayLabel(stage.estimateDays) +
+                  " · " + dayLabel(elapsed) + " so far";
+              } else {
+                timingText = "Estimated " + dayLabel(stage.estimateDays);
+              }
+              const overHtml = over > 0
+                ? ' · <span class="stages__over">' + dayLabel(over) + " over schedule</span>"
+                : "";
+              const timing =
+                '<span class="stages__timing">' + escapeHtml(timingText) + overHtml + "</span>";
+
+              const tag =
+                stage.status === "current"
+                  ? '<span class="stages__tag">In progress</span>'
+                  : "";
+
+              return (
+                '<li class="' + cls + '">' +
+                '  <span class="stages__marker" aria-hidden="true">' + marker + "</span>" +
+                '  <div class="stages__body">' +
+                '    <span class="stages__name">' + escapeHtml(stage.name) + "</span>" +
+                meta +
+                timing +
+                tag +
+                "  </div>" +
+                "</li>"
+              );
+            })
+            .join("");
+        }
+
+        function renderStepBar(claim) {
+          const total = claim.stages.length;
+          const currentIdx = claim.stages.findIndex(function (s) {
+            return s.status === "current";
+          });
+          const paid = isPaid(claim);
+
+          const caption = paid
+            ? "<strong>All " + total + " stages complete</strong>"
+            : "Stage <strong>" + (currentIdx + 1) + " of " + total + "</strong>: <strong>" +
+              escapeHtml(claim.stages[currentIdx].name) + "</strong>";
+
+          const items = claim.stages
+            .map(function (stage, i) {
+              const cls = "step-bar__step step-bar__step--" + stage.status;
+              const marker =
+                stage.status === "complete" ? "&#10003;" : String(i + 1);
+              return (
+                '<li class="' + cls + '">' +
+                '  <span class="step-bar__marker" aria-hidden="true">' + marker + "</span>" +
+                '  <span class="step-bar__name">' + escapeHtml(stage.name) + "</span>" +
+                "</li>"
+              );
+            })
+            .join("");
+
+          return (
+            '<div class="step-bar" aria-label="Claim stage progress">' +
+            '  <span class="step-bar__caption">' + caption + "</span>" +
+            '  <ol class="step-bar__steps">' + items + "</ol>" +
+            "</div>"
+          );
+        }
+
+        function renderTimelinePanel(claim) {
+          function panel(variant, heading, subline, reasons) {
+            let reasonHtml = "";
+            if (reasons && reasons.length > 0) {
+              const items = reasons
+                .map(function (r) {
+                  return (
+                    '<span class="govbb-text-body">' +
+                    '<strong>' + escapeHtml(r.stage) + ":</strong> " +
+                    escapeHtml(r.text) +
+                    "</span>"
+                  );
+                })
+                .join("");
+              reasonHtml =
+                '<div class="timeline-panel__reason">' +
+                '  <span class="timeline-panel__reason-label">Why this is delayed</span>' +
+                items +
+                "</div>";
+            }
+            return (
+              '<div class="timeline-panel timeline-panel--' + variant + '">' +
+              '  <span class="govbb-text-h4" style="font-weight: var(--font-weight-bold);">' +
+                   escapeHtml(heading) + "</span>" +
+              '  <p class="govbb-text-body" style="margin: 0;">' + escapeHtml(subline) + "</p>" +
+              reasonHtml +
+              "</div>"
+            );
+          }
+
+          const ref = today();
+
+          if (isPaid(claim)) {
+            const actual = actualTotalDays(claim);
+            const est = totalEstimateDays(claim);
+            const over = Math.max(0, actual - est);
+            const completed = formatDate(completionDate(claim));
+            const heading = "Completed in " + dayLabel(actual);
+            const subline = over > 0
+              ? "Took " + dayLabel(over) + " longer than the original estimate of " +
+                dayLabel(est) + ". Paid on " + completed + "."
+              : "Matched the original estimate of " + dayLabel(est) +
+                ". Paid on " + completed + ".";
+            return panel(over > 0 ? "warn" : "ok", heading, subline);
+          }
+
+          const est = totalEstimateDays(claim);
+          const delay = totalDelayDays(claim, ref);
+          const originalTarget = formatDate(originalTargetDate(claim));
+
+          if (delay === 0) {
+            return panel(
+              "ok",
+              "On track to complete in " + dayLabel(est),
+              "Expected completion: " + originalTarget + "."
+            );
+          }
+
+          const revisedTarget = formatDate(revisedTargetDate(claim, ref));
+          const reasons = delayedStagesWithReason(claim, ref).map(function (s) {
+            return { stage: s.name, text: s.delayReason };
+          });
+          return panel(
+            "warn",
+            "Running " + dayLabel(delay) + " behind schedule",
+            "Originally estimated " + dayLabel(est) + " (by " + originalTarget +
+              "). Now expected to complete by " + revisedTarget + ".",
+            reasons
+          );
+        }
+
+        function renderNextSteps(claim) {
+          if (claim.outstanding.length === 0) return "";
+
+          const unresolved = claim.outstanding.filter(function (i) {
+            return !i.resolved;
+          });
+          const waitDays = waitTimeAfterCurrentStage(claim);
+
+          const message = unresolved.length > 0
+            ? "You still need to submit the items above. We will update the status of your claim within 10-15 business days. " +
+              "You do not need to do anything else unless we contact you."
+            : "You do not need to do anything else right now. Your claim is back with our review team — " +
+              "we will update you within " + dayLabel(waitDays) + ".";
+
+          return (
+            '<div class="next-step">' +
+            '  <span class="govbb-text-h4" style="font-weight: var(--font-weight-bold);">What happens next</span>' +
+            '  <p class="govbb-text-body" style="margin: 0;">' + escapeHtml(message) + "</p>" +
+            "</div>"
+          );
+        }
+
+        function renderIssues(issues) {
+          const unresolved = issues.filter(function (i) { return !i.resolved; });
+          if (issues.length === 0 || unresolved.length === 0) {
+            const message =
+              issues.length === 0
+                ? "There are no outstanding issues on this claim. We will contact you if we need anything else."
+                : "Thanks — you have responded to every outstanding issue. We will review what you submitted and update the claim.";
+            return (
+              '<div class="panel-success">' +
+              '  <p class="govbb-text-body" style="margin: 0;">' + message + "</p>" +
+              "</div>"
+            );
+          }
+          const items = issues
+            .map(function (issue, i) {
+              const label = issue.type === "missing" ? "Missing" : "Incorrect";
+              if (issue.resolved) {
+                return (
+                  '<li class="issue" style="border-color: var(--color-green-00); background: var(--color-green-10);">' +
+                  '  <span class="issue__resolved-note">Submitted</span>' +
+                  '  <span class="issue__title govbb-text-h4">' + escapeHtml(issue.title) + "</span>" +
+                  '  <p class="govbb-text-body" style="margin: 0;">We have received your response and will review it shortly.</p>' +
+                  "</li>"
+                );
+              }
+              const action =
+                issue.type === "missing" ? "Upload document" : "Submit correct details";
+              return (
+                '<li class="issue">' +
+                '  <span class="issue__tag">' + label + "</span>" +
+                '  <span class="issue__title govbb-text-h4">' + escapeHtml(issue.title) + "</span>" +
+                '  <p class="govbb-text-body" style="margin: 0;">' + escapeHtml(issue.detail) + "</p>" +
+                '  <div class="govbb-btn-group" style="margin-top: var(--spacing-xs);">' +
+                '    <button type="button" class="govbb-btn" data-resolve-issue="' + i + '">' +
+                       escapeHtml(action) +
+                "    </button>" +
+                "  </div>" +
+                "</li>"
+              );
+            })
+            .join("");
+          return '<ul class="issues">' + items + "</ul>";
+        }
+
+        function flash(message) {
+          const region = document.getElementById("flash");
+          region.innerHTML =
+            '<div class="flash"><p class="govbb-text-body" style="margin: 0;">' +
+            escapeHtml(message) +
+            "</p></div>";
+          window.setTimeout(function () {
+            region.innerHTML = "";
+          }, 6000);
+        }
+
+        function openResolveDialog(index) {
+          const issue = claim.outstanding[index];
+          if (!issue || issue.resolved) return;
+
+          const isMissing = issue.type === "missing";
+          const useFields = !isMissing && Array.isArray(issue.fields) && issue.fields.length > 0;
+          const prefix = "resolve-" + index;
+          const titleId = prefix + "-title";
+
+          function fileMarkup() {
+            const id = prefix + "-file";
+            return (
+              '<label class="govbb-file-upload" for="' + id + '">' +
+              '  <span class="govbb-label">Upload file</span>' +
+              '  <span class="govbb-hint">JPG, PNG, or PDF. Maximum 5 MB.</span>' +
+              '  <span class="govbb-error-message" id="' + id + '-error" hidden>Choose a file to upload</span>' +
+              '  <div class="govbb-file-upload__dropzone">' +
+              '    <div class="govbb-file-upload__info">' +
+              '      <span class="govbb-file-upload__title" data-filename>Drop a file here or click to browse</span>' +
+              '      <span class="govbb-file-upload__subtitle">Accepted: JPG, PNG, PDF</span>' +
+              "    </div>" +
+              '    <div class="govbb-file-upload__action">' +
+              '      <span class="govbb-btn govbb-btn--secondary" aria-hidden="true">Choose file</span>' +
+              '      <span class="govbb-file-upload__max-size">Up to 5 MB</span>' +
+              "    </div>" +
+              '    <input class="govbb-file-upload__input" type="file" id="' + id +
+              '" name="file" accept=".jpg,.jpeg,.png,.pdf" />' +
+              "  </div>" +
+              "</label>"
+            );
+          }
+
+          function textMarkup() {
+            const id = prefix + "-text";
+            return (
+              '<div class="govbb-form-group">' +
+              '  <label class="govbb-label" for="' + id + '">Updated information</label>' +
+              '  <span class="govbb-hint">Include all details we need.</span>' +
+              '  <span class="govbb-error-message" id="' + id + '-error" hidden>Enter the updated information</span>' +
+              '  <div class="govbb-input-wrapper">' +
+              '    <textarea class="govbb-textarea" id="' + id + '" name="info" rows="5"></textarea>' +
+              "  </div>" +
+              "</div>"
+            );
+          }
+
+          function fieldsMarkup(fields) {
+            return fields
+              .map(function (f) {
+                const id = prefix + "-" + f.name;
+                return (
+                  '<div class="govbb-form-group">' +
+                  '  <label class="govbb-label" for="' + id + '">' + escapeHtml(f.label) + "</label>" +
+                  '  <span class="govbb-error-message" id="' + id + '-error" hidden>Enter your ' +
+                       escapeHtml(f.label.toLowerCase()) + "</span>" +
+                  '  <div class="govbb-input-wrapper">' +
+                  '    <input class="govbb-input" type="text" id="' + id + '" name="' + escapeHtml(f.name) + '" />' +
+                  "  </div>" +
+                  "</div>"
+                );
+              })
+              .join("");
+          }
+
+          const body = isMissing
+            ? fileMarkup()
+            : useFields
+              ? fieldsMarkup(issue.fields)
+              : textMarkup();
+
+          const dialog = document.createElement("dialog");
+          dialog.className = "resolve-dialog";
+          dialog.setAttribute("aria-labelledby", titleId);
+          dialog.innerHTML =
+            '<form class="resolve-dialog__form">' +
+            '  <header class="resolve-dialog__header">' +
+            '    <span class="govbb-text-caption" style="color: var(--color-text-muted);">' +
+                  (isMissing ? "Provide missing document" : "Correct your information") + "</span>" +
+            '    <h2 class="govbb-text-h3" id="' + titleId + '">' +
+                  escapeHtml(issue.title) + "</h2>" +
+            '    <p class="govbb-text-body" style="margin: 0;">' + escapeHtml(issue.detail) + "</p>" +
+            "  </header>" +
+            '  <div class="resolve-dialog__body">' + body + "</div>" +
+            '  <footer class="resolve-dialog__footer">' +
+            '    <button type="button" class="govbb-btn govbb-btn--secondary" data-cancel>Cancel</button>' +
+            '    <button type="submit" class="govbb-btn">Submit</button>' +
+            "  </footer>" +
+            "</form>";
+
+          document.body.appendChild(dialog);
+
+          const form = dialog.querySelector("form");
+
+          // Track inputs we validate. Each entry: { input, error, kind: "file" | "text" }
+          let entries;
+          if (isMissing) {
+            const input = dialog.querySelector("#" + prefix + "-file");
+            entries = [{ input: input, error: dialog.querySelector("#" + prefix + "-file-error"), kind: "file" }];
+            const filenameEl = dialog.querySelector("[data-filename]");
+            input.addEventListener("change", function () {
+              const file = input.files && input.files[0];
+              filenameEl.textContent = file ? file.name : "Drop a file here or click to browse";
+            });
+          } else if (useFields) {
+            entries = issue.fields.map(function (f) {
+              const id = prefix + "-" + f.name;
+              return {
+                input: dialog.querySelector("#" + id),
+                error: dialog.querySelector("#" + id + "-error"),
+                kind: "text",
+              };
+            });
+          } else {
+            const id = prefix + "-text";
+            entries = [{
+              input: dialog.querySelector("#" + id),
+              error: dialog.querySelector("#" + id + "-error"),
+              kind: "text",
+            }];
+          }
+
+          // Clear error as the user fixes each field.
+          entries.forEach(function (e) {
+            const evt = e.kind === "file" ? "change" : "input";
+            e.input.addEventListener(evt, function () {
+              const filled = e.kind === "file"
+                ? e.input.files && e.input.files.length > 0
+                : e.input.value.trim().length > 0;
+              if (filled) {
+                e.error.hidden = true;
+                e.input.removeAttribute("aria-invalid");
+              }
+            });
+          });
+
+          dialog.querySelector("[data-cancel]").addEventListener("click", function () {
+            dialog.close("cancel");
+          });
+
+          form.addEventListener("submit", function (ev) {
+            ev.preventDefault();
+            let firstBad = null;
+            entries.forEach(function (e) {
+              const filled = e.kind === "file"
+                ? e.input.files && e.input.files.length > 0
+                : e.input.value.trim().length > 0;
+              if (!filled) {
+                e.error.hidden = false;
+                e.input.setAttribute("aria-invalid", "true");
+                if (!firstBad) firstBad = e.input;
+              } else {
+                e.error.hidden = true;
+                e.input.removeAttribute("aria-invalid");
+              }
+            });
+            if (firstBad) {
+              firstBad.focus();
+              return;
+            }
+            issue.resolved = true;
+            dialog.close("submitted");
+          });
+
+          dialog.addEventListener("close", function () {
+            const submitted = dialog.returnValue === "submitted";
+            dialog.remove();
+            if (submitted) {
+              renderClaim();
+              flash('"' + issue.title + '" submitted. Thank you.');
+            }
+          });
+
+          dialog.showModal();
+        }
+
+        function wireResolveButtons() {
+          const buttons = root.querySelectorAll("[data-resolve-issue]");
+          buttons.forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              openResolveDialog(parseInt(btn.dataset.resolveIssue, 10));
+            });
+          });
+        }
+
+        function openHelpDialog() {
+          const dialog = document.createElement("dialog");
+          dialog.className = "resolve-dialog";
+          dialog.setAttribute("aria-labelledby", "help-title");
+          dialog.innerHTML =
+            '<form class="resolve-dialog__form">' +
+            '  <header class="resolve-dialog__header">' +
+            '    <span class="govbb-text-caption" style="color: var(--color-text-muted);">' +
+            '      Claim ' + escapeHtml(key) + "</span>" +
+            '    <h2 class="govbb-text-h3" id="help-title">Get help or report a concern</h2>' +
+            '    <p class="govbb-text-body" style="margin: 0;">' +
+            "      Tell us what you need. A case officer will reply within 2 working days." +
+            "    </p>" +
+            "  </header>" +
+            '  <div class="resolve-dialog__body">' +
+            '    <div class="govbb-form-group">' +
+            '      <label class="govbb-label" for="help-type">What can we help with?</label>' +
+            '      <div class="govbb-select-wrapper">' +
+            '        <select class="govbb-select" id="help-type" name="type">' +
+            '          <option value="question">I have a question about my claim</option>' +
+            '          <option value="help">I need help with a document or step</option>' +
+            '          <option value="concern">I want to report a concern</option>' +
+            '          <option value="other">Something else</option>' +
+            "        </select>" +
+            "      </div>" +
+            "    </div>" +
+            '    <div class="govbb-form-group">' +
+            '      <label class="govbb-label" for="help-message">Your message</label>' +
+            '      <span class="govbb-hint">Include any details we will need to look into this.</span>' +
+            '      <span class="govbb-error-message" id="help-error" hidden>Enter a message</span>' +
+            '      <div class="govbb-input-wrapper">' +
+            '        <textarea class="govbb-textarea" id="help-message" name="message" rows="5" required></textarea>' +
+            "      </div>" +
+            "    </div>" +
+            "  </div>" +
+            '  <footer class="resolve-dialog__footer">' +
+            '    <button type="button" class="govbb-btn govbb-btn--secondary" data-cancel>Cancel</button>' +
+            '    <button type="submit" class="govbb-btn">Send message</button>' +
+            "  </footer>" +
+            "</form>";
+
+          document.body.appendChild(dialog);
+
+          const form = dialog.querySelector("form");
+          const message = dialog.querySelector("#help-message");
+          const error = dialog.querySelector("#help-error");
+
+          message.addEventListener("input", function () {
+            if (message.value.trim()) {
+              error.hidden = true;
+              message.removeAttribute("aria-invalid");
+            }
+          });
+
+          dialog.querySelector("[data-cancel]").addEventListener("click", function () {
+            dialog.close("cancel");
+          });
+
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            if (!message.value.trim()) {
+              error.hidden = false;
+              message.setAttribute("aria-invalid", "true");
+              message.focus();
+              return;
+            }
+            showHelpConfirmation(dialog);
+          });
+
+          dialog.addEventListener("close", function () {
+            dialog.remove();
+          });
+
+          dialog.showModal();
+        }
+
+        function showHelpConfirmation(dialog) {
+          dialog.setAttribute("aria-labelledby", "help-confirm-title");
+          dialog.innerHTML =
+            '<div class="resolve-dialog__form">' +
+            '  <div class="resolve-dialog__body" style="background: var(--color-green-10); align-items: center; text-align: center; gap: var(--spacing-m);">' +
+            '    <span class="confirmation-check" aria-hidden="true">&#10003;</span>' +
+            '    <h2 class="govbb-text-h3" id="help-confirm-title" style="margin: 0;">Message sent</h2>' +
+            '    <p class="govbb-text-body" style="margin: 0;">' +
+            "      Thanks — we have received your message. A case officer will reply within 2 working days." +
+            "    </p>" +
+            "  </div>" +
+            '  <footer class="resolve-dialog__footer" style="justify-content: center;">' +
+            '    <button type="button" class="govbb-btn" data-confirm-close>Close</button>' +
+            "  </footer>" +
+            "</div>";
+
+          const closeBtn = dialog.querySelector("[data-confirm-close]");
+          closeBtn.addEventListener("click", function () {
+            dialog.close("submitted");
+          });
+          closeBtn.focus();
+        }
+
+        function wireHelpButton() {
+          const btn = root.querySelector("[data-help]");
+          if (btn) btn.addEventListener("click", openHelpDialog);
+        }
+
+        function renderClaim() {
+          const stage = currentStage(claim);
+
+          root.innerHTML =
+            '<div style="display: flex; flex-direction: column; gap: var(--spacing-m);">' +
+
+            '  <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">' +
+            '    <span class="govbb-text-caption" style="color: var(--color-text-muted);">Tracking number ' +
+            escapeHtml(key) + "</span>" +
+            '    <h1 class="govbb-text-h1">' + escapeHtml(claim.type) + " claim</h1>" +
+            "  </div>" +
+
+            renderStepBar(claim) +
+
+            renderTimelinePanel(claim) +
+
+            '  <div class="claim-summary">' +
+            "    <dl>" +
+            "      <dt>Applicant</dt><dd>" + escapeHtml(claim.applicant) + "</dd>" +
+            "      <dt>Claim type</dt><dd>" + escapeHtml(claim.type) + "</dd>" +
+            "      <dt>Submitted</dt><dd>" + escapeHtml(claim.submitted) + "</dd>" +
+            "      <dt>Current stage</dt><dd>" + escapeHtml(stage.name) + "</dd>" +
+            "    </dl>" +
+            "  </div>" +
+
+            '  <section style="display: flex; flex-direction: column; gap: var(--spacing-s);">' +
+            '    <h2 class="govbb-text-h2">Progress Timeline</h2>' +
+            '    <ol class="stages">' + renderStages(claim.stages) + "</ol>" +
+            "  </section>" +
+
+            (claim.outstanding.length > 0
+              ? '  <section style="display: flex; flex-direction: column; gap: var(--spacing-s);">' +
+                '    <h2 class="govbb-text-h2">Outstanding issues</h2>' +
+                '    <p class="govbb-text-body">You must resolve the following before your claim can move forward:</p>' +
+                renderIssues(claim.outstanding) +
+                renderNextSteps(claim) +
+                "  </section>"
+              : "") +
+
+            '  <div class="govbb-btn-group">' +
+            '    <button type="button" class="govbb-btn" data-help>' +
+            "      Get help or report a concern" +
+            "    </button>" +
+            '    <a class="govbb-btn govbb-btn--secondary" href="/">Go back</a>' +
+            "  </div>" +
+
+            "</div>";
+
+          wireResolveButtons();
+          wireHelpButton();
+        }
+
+        if (!claim) {
+          renderNotFound();
+        } else {
+          renderClaim();
+        }
+      })();
+    </script>
+  </body>
+</html>

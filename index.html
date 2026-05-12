@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GovBB Scaffold</title>
+    <title>Track your claim — GOVBB</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/@govtech-bb/styles@alpha/dist/styles.css"
@@ -55,11 +55,95 @@
 
     <main class="govbb-page__main">
       <div class="govbb-container">
-        <div style="padding-block: var(--spacing-m)">
-          <h1 class="govbb-text-h1">Page content</h1>
+        <div style="max-width: 40rem; padding-block: var(--spacing-m); display: flex; flex-direction: column; gap: var(--spacing-m);">
+          <div style="display: flex; flex-direction: column; gap: var(--spacing-s);">
+            <h1 class="govbb-text-h1">Track the status of your NIS claim</h1>
+            <p class="govbb-text-body">
+              Enter the tracking number from your confirmation email or letter to see the current status of your claim and any outstanding issues.
+            </p>
+          </div>
+
+          <form
+            id="tracking-form"
+            action="status"
+            method="get"
+            novalidate
+            style="display: flex; flex-direction: column; gap: var(--spacing-m);"
+          >
+            <div class="govbb-form-group">
+              <label class="govbb-label" for="tracking">Claim tracking number</label>
+              <span class="govbb-hint" id="tracking-hint">
+                For example, CL-2025-00123. You can find it at the top of your confirmation email.
+              </span>
+              <span
+                class="govbb-error-message"
+                id="tracking-error"
+                hidden
+              >
+                Enter a claim tracking number
+              </span>
+              <div class="govbb-input-wrapper">
+                <input
+                  class="govbb-input"
+                  type="text"
+                  id="tracking"
+                  name="tracking"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-describedby="tracking-hint"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="govbb-btn-group">
+              <button class="govbb-btn" type="submit">Find status of claim</button>
+            </div>
+          </form>
+
+          <details class="govbb-show-hide">
+            <summary class="govbb-show-hide__summary">Try the prototype with sample tracking numbers</summary>
+            <div class="govbb-show-hide__content">
+              <p class="govbb-text-body">This prototype uses dummy data. Try one of:</p>
+              <ul class="govbb-list govbb-list--bullet">
+                <li><a class="govbb-link" href="status?tracking=CL-2025-00123">CL-2025-00123</a> — sickness benefit, under review, no outstanding issues</li>
+                <li><a class="govbb-link" href="status?tracking=CL-2025-00456">CL-2025-00456</a> — employment injury, information requested, 2 outstanding issues</li>
+                <li><a class="govbb-link" href="status?tracking=CL-2025-00789">CL-2025-00789</a> — unemployment benefit, paid</li>
+              </ul>
+            </div>
+          </details>
         </div>
       </div>
     </main>
+
+    <script>
+      (function () {
+        const form = document.getElementById("tracking-form");
+        const input = document.getElementById("tracking");
+        const error = document.getElementById("tracking-error");
+
+        form.addEventListener("submit", function (e) {
+          const value = input.value.trim();
+          if (!value) {
+            e.preventDefault();
+            error.hidden = false;
+            input.setAttribute("aria-invalid", "true");
+            input.setAttribute("aria-describedby", "tracking-hint tracking-error");
+            input.focus();
+            return;
+          }
+          input.value = value.toUpperCase();
+        });
+
+        input.addEventListener("input", function () {
+          if (input.value.trim()) {
+            error.hidden = true;
+            input.removeAttribute("aria-invalid");
+            input.setAttribute("aria-describedby", "tracking-hint");
+          }
+        });
+      })();
+    </script>
 
     <footer class="govbb-footer">
       <div class="govbb-container govbb-footer__inner">
