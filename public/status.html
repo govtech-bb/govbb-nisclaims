@@ -167,8 +167,24 @@
         gap: var(--spacing-xxs);
       }
       .payout-panel--paid {
-        border-left-color: var(--color-green-00);
-        background: var(--color-green-10);
+        background: var(--color-green-00);
+        border-color: var(--color-green-00);
+        color: var(--color-white-00);
+      }
+      .payout-panel--paid .payout-panel__label {
+        color: var(--color-white-00);
+        opacity: 0.9;
+      }
+      .payout-panel--paid .payout-panel__amount {
+        color: var(--color-white-00);
+      }
+      .payout-panel--paid .govbb-btn {
+        background-color: var(--color-white-00);
+        color: var(--color-green-00);
+      }
+      .payout-panel--paid .govbb-btn:hover:not(:disabled) {
+        background-color: var(--color-green-40);
+        color: var(--color-green-00);
       }
       .payout-panel__label {
         color: var(--color-text-muted);
@@ -178,6 +194,28 @@
         font-size: var(--font-size-h3);
         font-weight: var(--font-weight-bold);
         color: var(--color-text);
+      }
+      .payout-panel__badge {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-weight: var(--font-weight-bold);
+        font-size: var(--font-size-body);
+        margin-bottom: var(--spacing-xxs);
+      }
+      .payout-panel__check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        background: var(--color-white-00);
+        color: var(--color-green-00);
+        font-size: 0.875rem;
+        font-weight: var(--font-weight-bold);
+        flex-shrink: 0;
       }
       .payout-panel__row {
         display: flex;
@@ -269,15 +307,6 @@
         display: flex;
         align-items: flex-start;
       }
-      .step-bar__current-name {
-        text-align: center;
-        font-size: var(--font-size-body);
-        font-weight: var(--font-weight-bold);
-        color: var(--color-text);
-        line-height: 1.3;
-        word-break: break-word;
-        margin-top: var(--spacing-xs);
-      }
       .step-bar__step {
         flex: 1 1 0;
         min-width: 0;
@@ -343,9 +372,6 @@
         white-space: nowrap;
         border: 0;
       }
-      /* Active stage name now rendered as a separate centered block
-         below the markers row (.step-bar__current-name). The names inside
-         each step stay visually hidden for screen reader continuity. */
 
       .issues {
         list-style: none;
@@ -659,16 +685,10 @@
             })
             .join("");
 
-          const activeName = currentIdx !== -1
-            ? '<div class="step-bar__current-name" aria-hidden="true">' +
-                escapeHtml(claim.stages[currentIdx].name) + "</div>"
-            : "";
-
           return (
             '<div class="step-bar" aria-label="Claim stage progress">' +
             '  <span class="step-bar__caption">' + caption + "</span>" +
             '  <ol class="step-bar__steps">' + items + "</ol>" +
-                activeName +
             "</div>"
           );
         }
@@ -748,18 +768,33 @@
           if (!claim.payout || !payoutMeta(claim)) return "";
           const paid = isPaid(claim);
           const total = payoutTotal(claim);
-          const label = paid ? "Total paid" : "Estimated total payout";
+
+          const badge = paid
+            ? '<span class="payout-panel__badge">' +
+              '  <span class="payout-panel__check" aria-hidden="true">&#10003;</span>' +
+              "  Claim complete &mdash; processing finished" +
+              "</span>"
+            : "";
+
+          const label = paid
+            ? "Amount paid to you"
+            : "Amount you are likely to receive (estimate)";
+
+          const ariaLabel = paid
+            ? "See how this amount was calculated"
+            : "See how this estimate was calculated";
 
           const disclaimer = paid
             ? ""
-            : '<p class="payout-panel__disclaimer">This is an estimate. The actual payout may vary based on certified duration, contributions verified at processing, and updates to NIS rates.</p>';
+            : '<p class="payout-panel__disclaimer">This is an estimate only. The actual amount may vary based on certified duration, contributions verified at processing, and updates to NIS rates.</p>';
 
           return (
             '<div class="payout-panel' + (paid ? " payout-panel--paid" : "") + '">' +
+            badge +
             '  <span class="payout-panel__label">' + escapeHtml(label) + "</span>" +
             '  <div class="payout-panel__row">' +
             '    <span class="payout-panel__amount">' + escapeHtml(formatCurrency(total)) + "</span>" +
-            '    <button type="button" class="govbb-btn" data-payout-explain aria-label="See why this estimate was calculated">' +
+            '    <button type="button" class="govbb-btn" data-payout-explain aria-label="' + ariaLabel + '">' +
             '      <span aria-hidden="true">&#9432;</span> See why?' +
             "    </button>" +
             "  </div>" +
@@ -1149,32 +1184,17 @@
           root.innerHTML =
             '<div style="display: flex; flex-direction: column; gap: var(--spacing-m);">' +
 
+            // 1. Page heading.
             '  <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">' +
             '    <span class="govbb-text-caption" style="color: var(--color-text-muted);">Tracking number ' +
             escapeHtml(key) + "</span>" +
             '    <h1 class="govbb-text-h1">' + escapeHtml(claim.type) + " claim</h1>" +
             "  </div>" +
 
+            // 2. Where am I.
             renderStepBar(claim) +
 
-            renderTimelinePanel(claim) +
-
-            renderPayoutPanel(claim) +
-
-            '  <div class="claim-summary">' +
-            "    <dl>" +
-            "      <dt>Applicant</dt><dd>" + escapeHtml(claim.applicant) + "</dd>" +
-            "      <dt>Claim type</dt><dd>" + escapeHtml(claim.type) + "</dd>" +
-            "      <dt>Submitted</dt><dd>" + escapeHtml(claim.submitted) + "</dd>" +
-            "      <dt>Current stage</dt><dd>" + escapeHtml(stage.name) + "</dd>" +
-            "    </dl>" +
-            "  </div>" +
-
-            '  <section style="display: flex; flex-direction: column; gap: var(--spacing-s);">' +
-            '    <h2 class="govbb-text-h2">Progress Timeline</h2>' +
-            '    <ol class="stages">' + renderStages(claim.stages) + "</ol>" +
-            "  </section>" +
-
+            // 3. What must I do (only when present, so it leads the actionable content).
             (claim.outstanding.length > 0
               ? '  <section style="display: flex; flex-direction: column; gap: var(--spacing-s);">' +
                 '    <h2 class="govbb-text-h2">Outstanding issues</h2>' +
@@ -1184,6 +1204,29 @@
                 "  </section>"
               : "") +
 
+            // 4. How much.
+            renderPayoutPanel(claim) +
+
+            // 5. When (schedule / delay reasons).
+            renderTimelinePanel(claim) +
+
+            // 6. Full stage-by-stage breakdown.
+            '  <section style="display: flex; flex-direction: column; gap: var(--spacing-s);">' +
+            '    <h2 class="govbb-text-h2">Progress Timeline</h2>' +
+            '    <ol class="stages">' + renderStages(claim.stages) + "</ol>" +
+            "  </section>" +
+
+            // 7. Metadata (claim identity).
+            '  <div class="claim-summary">' +
+            "    <dl>" +
+            "      <dt>Applicant</dt><dd>" + escapeHtml(claim.applicant) + "</dd>" +
+            "      <dt>Claim type</dt><dd>" + escapeHtml(claim.type) + "</dd>" +
+            "      <dt>Submitted</dt><dd>" + escapeHtml(claim.submitted) + "</dd>" +
+            "      <dt>Current stage</dt><dd>" + escapeHtml(stage.name) + "</dd>" +
+            "    </dl>" +
+            "  </div>" +
+
+            // 8. Actions.
             '  <div class="govbb-btn-group">' +
             '    <button type="button" class="govbb-btn" data-help>' +
             "      Need help?" +

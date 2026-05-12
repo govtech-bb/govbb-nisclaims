@@ -200,9 +200,8 @@
 
   const HELP_PILLS_GENERAL = [
     "Am I eligible for an NIS benefit?",
+    "How is my benefit calculated?",
     "How do waiting days work?",
-    "How is average insurable weekly earnings calculated?",
-    "What if someone resigns or is dismissed for misconduct?",
   ];
 
   function escapeHtml(value) {
@@ -291,30 +290,25 @@
 
     const paid = claim.stages.every(function (s) { return s.status === "complete"; });
     const hasOutstanding = (claim.outstanding || []).some(function (i) { return !i.resolved; });
-    const pills = [];
 
     if (paid) {
-      pills.push("Why did I receive this amount?");
-      pills.push("Can I claim again if I'm in this situation again?");
-    } else if (hasOutstanding) {
-      pills.push("What do I need to do next?");
-      pills.push("Why is my claim delayed?");
-    } else {
-      pills.push("What does my current stage mean?");
-      pills.push("When will I receive payment?");
+      return [
+        "Why did I receive this amount?",
+        "Can I claim again later?",
+      ];
     }
-
-    pills.push("How was my estimated payout calculated?");
-
-    if (claim.type === "Sickness benefit") {
-      pills.push("How do waiting days affect my payout?");
-    } else if (claim.type === "Unemployment benefit") {
-      pills.push("What if I'm dismissed for misconduct?");
-    } else if (claim.type === "Employment injury") {
-      pills.push("What if my recovery takes longer than 52 weeks?");
+    if (hasOutstanding) {
+      return [
+        "What do I need to do next?",
+        "Why is my claim delayed?",
+        "How was my amount calculated?",
+      ];
     }
-
-    return pills.slice(0, 4);
+    return [
+      "What does my current stage mean?",
+      "When will I receive payment?",
+      "How was my amount calculated?",
+    ];
   }
 
   // Build a compact JSON-friendly claim context for the AI.
